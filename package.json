@@ -1,0 +1,25 @@
+{
+  "name": "ps-view-loader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mayalust/ps-view-loader.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mayalust/ps-view-loader/issues"
+  },
+  "homepage": "https://github.com/mayalust/ps-view-loader#readme",
+  "dependencies": {
+    "proudsmart-log": "^1.0.14",
+    "ps-file": "^1.0.18",
+    "ps-request": "^1.0.0",
+    "ps-ultility": "^1.0.51"
+  }
+}
