@@ -269,7 +269,7 @@ function pack( query ){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   });
 }
-function server( app ){
+function serverFn( app ){
   function angularMiddleware( req, res, next ){
     let match = /app-views[\\\/]build[\\\/](\d+)\.([^.]+)\.js/.exec( req.url ),
       viewId, path;
@@ -293,6 +293,6 @@ function server( app ){
   }
   app.use(angularMiddleware);
 }
-module.exports.server = server;
+module.exports.server = serverFn;
 module.exports.write = write;
 module.exports.pack = pack;
