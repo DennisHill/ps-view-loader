@@ -118,10 +118,10 @@ function writeFilesByViewId( viewId ){
               return workfolder.write( d[0] + ".js", `/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/\n${d[1]}`);
             })).then( d => {
               return workfolder.write("json.js", beautify(`/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/
-psdefine({
+psdefine(function(){return{
   "layout" : ${replaceExp(JSON.stringify(layout, null, 2))},
   "setting" : require("../setting.js")
-})`, { indent_size: 2, space_in_empty_paren: true }))
+}})`, { indent_size: 2, space_in_empty_paren: true }))
             })
           })
         }))
