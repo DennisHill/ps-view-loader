@@ -86,6 +86,7 @@ function writeFilesByViewId( viewId ){
         });
       })
       .then( workfolder => {
+        groups && groups[0] ? groups[0].path = "index" : null;
         return Promise.all(groups.map( ({ path, layout }) => {
           return ( workfolder.exist( path ) ? workfolder.mkdir( path + "_" ) : workfolder.mkdir( path ) ).then( workfolder => {
             let arr = [], map = [];
