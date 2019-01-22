@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "import": "ps-view-loader import",
+    "build": "ps-view-loader build"
   },
   "repository": {
     "type": "git",
@@ -15,11 +16,22 @@
   "bugs": {
     "url": "https://github.com/mayalust/ps-view-loader/issues"
   },
+  "bin": {
+    "ps-view-loader": "./dist/run.js"
+  },
   "homepage": "https://github.com/mayalust/ps-view-loader#readme",
   "dependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.2.3",
+    "babel-loader": "^8.0.4",
+    "js-beautify": "^1.8.9",
     "proudsmart-log": "^1.0.14",
-    "ps-file": "^1.0.18",
+    "ps-file": "^1.0.27",
     "ps-request": "^1.0.0",
-    "ps-ultility": "^1.0.51"
+    "ps-ultility": "^1.0.57",
+    "webpack": "^4.29.0"
+  },
+  "publishConfig": {
+    "registry": "http://114.215.131.16:3502/repository/proudsmart/"
   }
 }
