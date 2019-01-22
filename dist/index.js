@@ -272,7 +272,7 @@ function build( query ){
 }
 function serverFn( app ){
   function angularMiddleware( req, res, next ){
-    let match = /app-views[\\\/]build[\\\/](\d+)\.([^.]+)\.js/.exec( req.url ),
+    let match = /app-views[\\\/]build[\\\/](\d+)\.([^.]+)\.js$/.exec( req.url ),
       viewId, path;
     if( match ){
       viewId = match[1];
