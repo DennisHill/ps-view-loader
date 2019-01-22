@@ -230,7 +230,7 @@ function packJSON( viewId, path ){
     })
   });
 }
-function pack( query ){
+function build( query ){
   time = new Date();
   psfile(pathLib.resolve(workpath)).stat().then( folder => {
     return folder.exist("app-views") ? folder.stat("app-views") : error("no exist")
@@ -295,4 +295,4 @@ function serverFn( app ){
 }
 module.exports.server = serverFn;
 module.exports.write = write;
-module.exports.pack = pack;
+module.exports.build = build;
