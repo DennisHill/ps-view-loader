@@ -1,8 +1,8 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "import": "ps-view-loader import",
     "build": "ps-view-loader build"
