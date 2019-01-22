@@ -6,7 +6,7 @@ let arguments = process.argv.slice(2),
     import( ){
       write.apply( null, arguments );
     },
-    init( ){
+    build( ){
       build.apply( null, arguments )
     }
   },
