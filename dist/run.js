@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { write, build } = require(`./index`);
+const { write, build, saveview } = require(`./index`);
 let arguments = process.argv.slice(2),
   command = arguments.shift(),
   fns = {
@@ -7,7 +7,10 @@ let arguments = process.argv.slice(2),
       write.apply( null, arguments );
     },
     build( ){
-      build.apply( null, arguments )
+      build.apply( null, arguments );
+    },
+    save( ){
+      saveview.apply( null, arguments );
     }
   },
   fn = fns[command];

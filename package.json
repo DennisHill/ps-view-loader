@@ -5,7 +5,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "import": "ps-view-loader import",
-    "build": "ps-view-loader build"
+    "build": "ps-view-loader build",
+    "save": "ps-view-loader save"
   },
   "repository": {
     "type": "git",
