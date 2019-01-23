@@ -277,15 +277,15 @@ function saveview( query ){
     ? d => true
     : ({ basename }) => query.split(",").indexOf( basename ) != -1;
   function extractLayout( str ){
-    let match = /"layout"\s*:\s*({[^\$]*}),\s*\n\s*"setting"/.exec( str );
+    let match = /"layout"\s*:\s*({(?:.|\n)*}),\s*\n\s*"setting"/g.exec( str );
     return match ? match[1] : str;
   }
   function extractLabel( str ){
-    let match = /"label"\s*:\s*"([^"]*)",\s*\n\s*"layout"/.exec( str );
+    let match = /"label"\s*:\s*"([^"]*)",\s*\n\s*"layout"/g.exec( str );
     return match ? match[1] : str;
   }
   function getScript( str ){
-    let match = /module\.exports\s*=\s*({[^\$]*)/g.exec(str);
+    let match = /module\.exports\s*=\s*({(?:.|\n)*)/g.exec(str);
     return match ? match[1] : "{}";
   }
   psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
@@ -307,7 +307,7 @@ function saveview( query ){
               return Promise.all(files.map( ( file, inx ) => {
                 return file.read().then( content => {
                   let ct = content.toString(),
-                    match = /module\.exports\s*=\s*({[^\$]*)/g.exec(ct);
+                    match = /module\.exports\s*=\s*({(?:.|\n)*)/g.exec(ct);
                   if( match ){
                     json = json.replace(`require("./content/${file.basename}")`, JSON.stringify(beautify(`expression = ${match[1]}`)));
                   }
@@ -318,6 +318,8 @@ function saveview( query ){
               return success( json );
             })
           }).then( json => {
+            console.log( " =================================================== " );
+            console.log( extractLayout(json) );
             return success({
               id : inx,
               path : dir.basename,
