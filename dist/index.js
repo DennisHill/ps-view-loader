@@ -318,8 +318,6 @@ function saveview( query ){
               return success( json );
             })
           }).then( json => {
-            console.log( " =================================================== " );
-            console.log( extractLayout(json) );
             return success({
               id : inx,
               path : dir.basename,
