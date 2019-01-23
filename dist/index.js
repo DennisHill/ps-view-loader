@@ -43,7 +43,7 @@ function writeFilesByViewId( viewId ){
   return viewFlexService.post("getViewById", viewId).then( view => {
     log.info( `start to load dashboard view : [ ${view.viewTitle} ] - ${view.viewId}` );
     let json = JSON.parse( view.content ),
-      groups = ( json ? json.groups : [] ) || [{ path : "index", layout :json.layout }];
+      groups = ( json ? json.groups : [] ) || [{ path : "index", layout :json.layout, label : "index" }];
     if( workfolder.exist( view.viewId ) ){
       log.info(`${ view.viewId } folder is exist!!`)
     }
@@ -73,8 +73,8 @@ function writeFilesByViewId( viewId ){
       .then( workfolder => {
         return workfolder.write("setting.js",beautify( `module.export = ${makeJson( json && json.setting)}` ))
           .then( d => {
-          return workfolder.stat()
-        });
+            return workfolder.stat()
+          });
       })
       .then( workfolder => {
         return workfolder.write("config.js", beautify(`module.exports = ${JSON.stringify({
@@ -87,13 +87,13 @@ function writeFilesByViewId( viewId ){
       })
       .then( workfolder => {
         groups && groups[0] ? groups[0].path = "index" : null;
-        return Promise.all(groups.map( ({ path, layout }) => {
+        return Promise.all(groups.map( ({ path, layout, label }) => {
           return ( workfolder.exist( path ) ? workfolder.mkdir( path + "_" ) : workfolder.mkdir( path ) ).then( workfolder => {
             let arr = [], map = [];
             tree("children").forEach(layout, (n,i,p,pl) => {
-              let exp = n.advance && n.advance.expression || "", name = `./${n.type}_${arr.length}`, hash = random(), match;
+              let exp = n.advance && n.advance.expression || "", name = `${n.type}_${arr.length}`, hash = random(), match;
               if( exp.length > 300){
-                match = new RegExp("^([^{]*)\\{", "g").exec(exp);
+                match = new RegExp("^([^{]*)\{", "g").exec(exp);
                 if( match ){
                   exp = exp.slice(match[1].length);
                 } else {
@@ -102,7 +102,7 @@ function writeFilesByViewId( viewId ){
                 arr.push( [name, `module.exports = ${ exp }`] );
                 map.push({
                   name : hash,
-                  exp : "require(\"" + name + ".js\")"
+                  exp : "require(\"./content/" + name + ".js\")"
                 })
                 n.advance.expression = `__${hash}__`;
               }
@@ -110,20 +110,21 @@ function writeFilesByViewId( viewId ){
             function replaceExp( str ){
               let item = map.shift();
               if( item ) {
-                return replaceExp(str.replace(new RegExp(`\\"__${item.name}__\\"`, "g"), item.exp));
+                return replaceExp(str.replace(new RegExp(`\"__${item.name}__\"`, "g"), item.exp));
               } else {
                 return str;
               }
             }
-            return Promise.all(arr.map( d => {
-              return workfolder.write( d[0] + ".js", `/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/\n${d[1]}`);
-            })).then( d => {
-              return workfolder.write("json.js", beautify(`/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/
+            return workfolder.mkdir("content").then( fdr =>
+              Promise.all( arr.map( d =>
+                fdr.write( d[0] + ".js", `/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/\n${d[1]}`))))
+              .then( d =>  workfolder.write("json.js", beautify(`/** 仪表板 : [ ${view.viewTitle} ] - ${view.viewId} **/
 psdefine(function(){return{
+  "label" : "${label}",
   "layout" : ${replaceExp(JSON.stringify(layout, null, 2))},
   "setting" : require("../setting.js")
 }})`, { indent_size: 2, space_in_empty_paren: true }))
-            })
+              )
           })
         }))
       }).then( d => {
@@ -270,9 +271,88 @@ function build( query ){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   });
 }
+
+function saveview( query ){
+  let filter = query == "*" || typeof query !== "string"
+    ? d => true
+    : ({ basename }) => query.split(",").indexOf( basename ) != -1;
+  function extractLayout( str ){
+    let match = /"layout"\s*:\s*({[^\$]*}),\s*\n\s*"setting"/.exec( str );
+    return match ? match[1] : str;
+  }
+  function extractLabel( str ){
+    let match = /"label"\s*:\s*"([^"]*)",\s*\n\s*"layout"/.exec( str );
+    return match ? match[1] : str;
+  }
+  function getScript( str ){
+    let match = /module\.exports\s*=\s*({[^\$]*)/g.exec(str);
+    return match ? match[1] : "{}";
+  }
+  psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
+    return folder.readDir('./views');
+  }).then( viewFolders => {
+    return success(viewFolders.filter( filter ))
+  }).then( viewFolders => {
+    return execQueue( viewFolders, 0, viewFolder => {
+      return viewFolder.readDir().then( dirs => {
+        let setting
+        viewFolder.read("./setting.js", d => {
+          setting = JSON.parse(getScript( d ));
+        })
+        return Promise.all( dirs.filter(isDirectory).map( (dir, inx) => {
+          let json;
+          return dir.read("./json.js").then( content => {
+            json = content.toString();
+            return dir.readDir("./content").then( files => {
+              return Promise.all(files.map( ( file, inx ) => {
+                return file.read().then( content => {
+                  let ct = content.toString(),
+                    match = /module\.exports\s*=\s*({[^\$]*)/g.exec(ct);
+                  if( match ){
+                    json = json.replace(`require("./content/${file.basename}")`, JSON.stringify(beautify(`expression = ${match[1]}`)));
+                  }
+                  return success()
+                })
+              }))
+            }).then( d => {
+              return success( json );
+            })
+          }).then( json => {
+            return success({
+              id : inx,
+              path : dir.basename,
+              label : extractLabel(json),
+              layout : JSON.parse(extractLayout(json))
+            })
+          })
+        })).then( jsons => {
+          let viewjson = {
+            version : "V_2",
+            groups : jsons,
+            setting : setting
+          };
+          return success( JSON.stringify( viewjson ) );
+        }).then( content => {
+          let viewId = viewFolder.basename;
+          return checkLogin( defaultConfig ).then( d => {
+            return viewFlexService.post("getViewById", viewId)
+          }).then( view => {
+            view.content = content;
+            return viewFlexService.post("updateView", view)
+          })
+        })
+      });
+    })
+  }).then( d => {
+    log.success(`success : dashboard view [${query}] is already updated!!`)
+  }).catch( e => {
+    e.message ? log.error( `message : ${e.message}` ) : null;
+    e.stack ? log.error( `stack : ${e.stack}` ) : null;
+  })
+}
 function serverFn( app ){
   function angularMiddleware( req, res, next ){
-    let match = /app-views[\\\/]build[\\\/](\d+)\.([^.]+)\.js$/.exec( req.url ),
+    let match = /app-views[\\/]build[\\/](\d+)\.([^.]+)\.js$/.exec( req.url ),
       viewId, path;
     if( match ){
       viewId = match[1];
@@ -294,6 +374,7 @@ function serverFn( app ){
   }
   app.use(angularMiddleware);
 }
+module.exports.saveview = saveview;
 module.exports.server = serverFn;
 module.exports.write = write;
 module.exports.build = build;
