@@ -395,7 +395,10 @@ function serverFn( app ){
       }).catch( e => {
         e.message ? log.error( `message : ${e.message}` ) : null;
         e.stack ? log.error( `stack : ${e.stack}` ) : null;
-        res.write(`throw new Error("${req.url} does cannot be loaded!")`);
+        res.write(`psdefine(
+function(){
+  throw new Error("${req.url} does cannot be loaded!")
+})`);
         res.end();
       });
     } else {
