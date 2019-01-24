@@ -271,7 +271,25 @@ function build( query ){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   });
 }
-
+function removeview( query ){
+  let filter = query == "*" || typeof query !== "string"
+    ? d => true
+    : ({ basename }) => query.split(",").indexOf( basename ) != -1;
+  psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
+    return folder.readDir('./views');
+  }).then( viewFolders => {
+    return success(viewFolders.filter( filter ))
+  }).then( viewFolders => {
+    return execQueue( viewFolders, 0, viewFolder => {
+      return viewFolder.removeAll();
+    })
+  }).then( d => {
+    log.success("local views cleared!!")
+  }).catch( e => {
+    e.message ? log.error( `message : ${e.message}` ) : null;
+    e.stack ? log.error( `stack : ${e.stack}` ) : null;
+  })
+}
 function saveview( query ){
   let filter = query == "*" || typeof query !== "string"
     ? d => true
@@ -350,6 +368,16 @@ function saveview( query ){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   })
 }
+function getlisteners(){
+  return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
+    return folder.readDir('./views');
+  }).then( viewFolders => {
+    return success(viewFolders.map( v => v.basename ))
+  }).catch( e => {
+    e.message ? log.error( `message : ${e.message}` ) : null;
+    e.stack ? log.error( `stack : ${e.stack}` ) : null;
+  })
+}
 function serverFn( app ){
   function angularMiddleware( req, res, next ){
     let match = /app-views[\\/]build[\\/](\d+)\.([^.]+)\.js$/.exec( req.url ),
@@ -358,7 +386,7 @@ function serverFn( app ){
       viewId = match[1];
       path = match[2];
       packJSON( viewId, path).then( d=> {
-        psfile(pathLib.join(workpath, `./app-views/build`))
+        return psfile(pathLib.join(workpath, `./app-views/build`))
           .read(`./${viewId}.${path}.js`).then( d => {
           res.setHeader(`Content-Type`, `application/javascript;charset=UTF-8`);
           res.write( d );
@@ -367,12 +395,96 @@ function serverFn( app ){
       }).catch( e => {
         e.message ? log.error( `message : ${e.message}` ) : null;
         e.stack ? log.error( `stack : ${e.stack}` ) : null;
+        res.write(`throw new Error("${req.url} does cannot be loaded!")`);
+        res.end();
       });
     } else {
       next();
     }
   }
+  function toJson( str ){
+    var rs = str;
+    try {
+      rs = JSON.stringify( str );
+    } catch ( e ){
+      console.log( e );
+    } finally {
+      return rs;
+    }
+  }
+  function getData( req ){
+    return new Promise((res, rej) => {
+      let str = "";
+      req.on("data", chunk => {
+        str += chunk.toString();
+      })
+      req.on("end", chunk => {
+        res( toJson( str ) );
+      });
+      req.on("error", e =>{
+        rej( e );
+      })
+    })
+  }
   app.use(angularMiddleware);
+  app.post("/api/rest/post/inspectionService/start", (req, res) => {
+    getData( req ).then( viewId => {
+      saveview( viewId ).then( d => {
+        let obj = {
+          code : 0,
+          data : null,
+          message : null
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      }).catch( e => {
+        let obj = {
+          message : e.message,
+          stack : e.stack
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      });
+    })
+  });
+  app.post("/api/rest/post/inspectionService/end", (req, res) => {
+    getData( req ).then( viewId => {
+      removeview( viewId ).then( d => {
+        let obj = {
+          code : 0,
+          data : null,
+          message : null
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      }).catch( e => {
+        let obj = {
+          message : e.message,
+          stack : e.stack
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      });
+    })
+  });
+  app.post("/api/rest/post/inspectionService/getlisteners", (req, res) => {
+    getlisteners( viewId ).then( d => {
+      let obj = {
+        code : 0,
+        data : d,
+        message : null
+      }
+      res.write(JSON.stringify(obj));
+      res.end();
+    }).catch( e => {
+      let obj = {
+        message : e.message,
+        stack : e.stack
+      }
+      res.write(JSON.stringify(obj));
+      res.end();
+    });
+  })
 }
 module.exports.saveview = saveview;
 module.exports.server = serverFn;
