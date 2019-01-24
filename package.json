@@ -1,6 +1,6 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
@@ -27,12 +27,9 @@
     "babel-loader": "^8.0.4",
     "js-beautify": "^1.8.9",
     "proudsmart-log": "^1.0.14",
-    "ps-file": "^1.0.27",
+    "ps-file": "^1.0.29",
     "ps-request": "^1.0.0",
     "ps-ultility": "^1.0.57",
     "webpack": "^4.29.0"
-  },
-  "publishConfig": {
-    "registry": "http://114.215.131.16:3502/repository/proudsmart/"
   }
 }

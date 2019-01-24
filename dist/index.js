@@ -275,13 +275,23 @@ function removeview( query ){
   let filter = query == "*" || typeof query !== "string"
     ? d => true
     : ({ basename }) => query.split(",").indexOf( basename ) != -1;
-  psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
+  return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
     return folder.readDir('./views');
   }).then( viewFolders => {
     return success(viewFolders.filter( filter ))
   }).then( viewFolders => {
     return execQueue( viewFolders, 0, viewFolder => {
-      return viewFolder.removeAll();
+      return viewFolder.removeAll().then( d => {
+        return psfile(pathLib.resolve(workpath)).stat("./app-views/build/").then( folder => {
+          return folder.children( node => {
+            return node.path.indexOf(viewFolder.basename+".") !== -1
+          })
+        }).then( files => {
+          return Promise.all(files.map( file => {
+            return file.remove();
+          }))
+        })
+      });
     })
   }).then( d => {
     log.success("local views cleared!!")
@@ -306,7 +316,7 @@ function saveview( query ){
     let match = /module\.exports\s*=\s*({(?:.|\n)*)/g.exec(str);
     return match ? match[1] : "{}";
   }
-  psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
+  return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
     return folder.readDir('./views');
   }).then( viewFolders => {
     return success(viewFolders.filter( filter ))
@@ -388,10 +398,10 @@ function serverFn( app ){
       packJSON( viewId, path).then( d=> {
         return psfile(pathLib.join(workpath, `./app-views/build`))
           .read(`./${viewId}.${path}.js`).then( d => {
-          res.setHeader(`Content-Type`, `application/javascript;charset=UTF-8`);
-          res.write( d );
-          res.end();
-        })
+            res.setHeader(`Content-Type`, `application/javascript;charset=UTF-8`);
+            res.write( d );
+            res.end();
+          })
       }).catch( e => {
         e.message ? log.error( `message : ${e.message}` ) : null;
         e.stack ? log.error( `stack : ${e.stack}` ) : null;
@@ -408,7 +418,7 @@ function(){
   function toJson( str ){
     var rs = str;
     try {
-      rs = JSON.stringify( str );
+      rs = typeof str == "string" ? str : JSON.stringify( str );
     } catch ( e ){
       console.log( e );
     } finally {
@@ -432,6 +442,27 @@ function(){
   app.use(angularMiddleware);
   app.post("/api/rest/post/inspectionService/start", (req, res) => {
     getData( req ).then( viewId => {
+      write( viewId ).then( d => {
+        let obj = {
+          code : 0,
+          data : null,
+          message : null
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      }).catch( e => {
+        let obj = {
+          message : e.message,
+          stack : e.stack
+        }
+        res.write(JSON.stringify(obj));
+        res.end();
+      });
+    })
+  });
+
+  app.post("/api/rest/post/inspectionService/save", (req, res) => {
+    getData( req ).then( viewId => {
       saveview( viewId ).then( d => {
         let obj = {
           code : 0,
@@ -450,6 +481,7 @@ function(){
       });
     })
   });
+
   app.post("/api/rest/post/inspectionService/end", (req, res) => {
     getData( req ).then( viewId => {
       removeview( viewId ).then( d => {
@@ -471,7 +503,7 @@ function(){
     })
   });
   app.post("/api/rest/post/inspectionService/getlisteners", (req, res) => {
-    getlisteners( viewId ).then( d => {
+    getlisteners( ).then( d => {
       let obj = {
         code : 0,
         data : d,
