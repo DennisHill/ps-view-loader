@@ -155,6 +155,9 @@ function error( d ){
 function getViewIds( d ){
   return Promise.all(d.map( n => success( n.viewId )));
 }
+function removeConsoleLog( str ){
+  return str.replace(/console\.log\([^()]*\)\s*;?/g, "").replace(/debugger\s*;?/g, "");
+}
 function checkLogin( { username, password } ) {
   return new Promise((resolve, reject) => {
     userLoginUIService.post("getCurrentUser").then( d => {
@@ -365,7 +368,7 @@ function saveview( query ){
           return checkLogin( defaultConfig ).then( d => {
             return viewFlexService.post("getViewById", viewId)
           }).then( view => {
-            view.content = content;
+            view.content = removeConsoleLog( content );
             return viewFlexService.post("updateView", view)
           })
         })
