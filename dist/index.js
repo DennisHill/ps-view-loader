@@ -11,6 +11,7 @@ const server = require("ps-request"),
     username : "baowu_steel",
     password : "abc123"
   },
+  beautifyConfig = { indent_size: 2, space_in_empty_paren: true },
   psfile = require("ps-file"),
   __webpackConfig = {
     mode : "development",
@@ -71,7 +72,7 @@ function writeFilesByViewId( viewId ){
       })
       : workfolder.mkdir( view.viewId ))
       .then( workfolder => {
-        return workfolder.write("setting.js",beautify( `module.export = ${makeJson( json && json.setting)}` ))
+        return workfolder.write("setting.js",beautify( `module.export = ${makeJson( json && json.setting)}`, beautifyConfig ))
           .then( d => {
             return workfolder.stat()
           });
@@ -81,12 +82,14 @@ function writeFilesByViewId( viewId ){
           viewTitle : view.viewTitle,
           viewId : view.viewId,
           viewType : view.viewType
-        }, null, 2)}`)).then( d => {
+        }, null, 2)}`, beautifyConfig)).then( d => {
           return workfolder.stat()
         });
       })
       .then( workfolder => {
-        groups && groups[0] ? groups[0].path = "index" : null;
+        if( groups && !groups.some( d => d.path == "index")){
+          groups[0].path = "index"
+        }
         return Promise.all(groups.map( ({ path, layout, label }) => {
           return ( workfolder.exist( path ) ? workfolder.mkdir( path + "_" ) : workfolder.mkdir( path ) ).then( workfolder => {
             let arr = [], map = [];
@@ -123,7 +126,7 @@ psdefine(function(){return{
   "label" : "${label}",
   "layout" : ${replaceExp(JSON.stringify(layout, null, 2))},
   "setting" : require("../setting.js")
-}})`, { indent_size: 2, space_in_empty_paren: true }))
+}})`, beautifyConfig))
               )
           })
         }))
@@ -156,7 +159,7 @@ function getViewIds( d ){
   return Promise.all(d.map( n => success( n.viewId )));
 }
 function removeConsoleLog( str ){
-  return str.replace(/console\.log\([^()]*\)\s*;?/g, "").replace(/debugger\s*;?/g, "");
+  return str.replace(/console\.info\([^()]*\)\s*;?/g, "").replace(/console\.log\([^()]*\)\s*;?/g, "").replace(/debugger\s*;?/g, "");
 }
 function checkLogin( { username, password } ) {
   return new Promise((resolve, reject) => {
@@ -340,7 +343,7 @@ function saveview( query ){
                   let ct = content.toString(),
                     match = /module\.exports\s*=\s*({(?:.|\n)*)/g.exec(ct);
                   if( match ){
-                    json = json.replace(`require("./content/${file.basename}")`, JSON.stringify(beautify(`expression = ${match[1]}`)));
+                    json = json.replace(`require("./content/${file.basename}.js")`, JSON.stringify(beautify(`expression = ${match[1]}`, beautifyConfig)));
                   }
                   return success()
                 })
@@ -349,11 +352,17 @@ function saveview( query ){
               return success( json );
             })
           }).then( json => {
+            var pack;
+            try {
+              pack = JSON.parse(extractLayout(json))
+            } catch (e) {
+              throw new Error( dir.basename + "  :  " + json );
+            }
             return success({
               id : inx,
               path : dir.basename,
               label : extractLabel(json),
-              layout : JSON.parse(extractLayout(json))
+              layout : pack
             })
           })
         })).then( jsons => {
@@ -369,6 +378,7 @@ function saveview( query ){
             return viewFlexService.post("getViewById", viewId)
           }).then( view => {
             view.content = removeConsoleLog( content );
+            console.log( view.content );
             return viewFlexService.post("updateView", view)
           })
         })
