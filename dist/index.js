@@ -1,6 +1,6 @@
 const server = require("ps-request"),
   webpack = require("webpack"),
-  beautify = require('js-beautify').js,
+  beautify = require('js-beautify'),
   log = require("proudsmart-log")(),
   { tree, random, extend } = require("ps-ultility"),
   workpath = process.cwd(),
@@ -11,7 +11,10 @@ const server = require("ps-request"),
     username : "baowu_steel",
     password : "abc123"
   },
-  beautifyConfig = { indent_size: 2, space_in_empty_paren: true },
+  beautifyConfig = {
+    indent_size: 2,
+    space_in_empty_paren: true
+  },
   psfile = require("ps-file"),
   __webpackConfig = {
     mode : "development",
