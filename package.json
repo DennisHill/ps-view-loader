@@ -1,12 +1,13 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
     "import": "ps-view-loader import",
     "build": "ps-view-loader build",
-    "save": "ps-view-loader save"
+    "save": "ps-view-loader save",
+    "save2role" : "ps-view-loader save2role"
   },
   "repository": {
     "type": "git",

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { write, build, saveview } = require(`./index`);
+const { write, build, saveview, save2role } = require(`./index`);
 let arguments = process.argv.slice(2),
   command = arguments.shift(),
   fns = {
@@ -11,6 +11,9 @@ let arguments = process.argv.slice(2),
     },
     save( ){
       saveview.apply( null, arguments );
+    },
+    save2role( ){
+      save2role.apply( null, arguments );
     }
   },
   fn = fns[command];

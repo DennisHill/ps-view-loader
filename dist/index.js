@@ -35,6 +35,8 @@ let req = server("http://36.110.36.118:11780/api/rest/post/"),
   userLoginUIService = req.service("userLoginUIService"),
   resourceUIService = req.service("resourceUIService"),
   viewFlexService = req.service("viewFlexService"),
+  userEnterpriseService = req.service("userEnterpriseService"),
+  userRoleUIService = req.service("userRoleUIService"),
   workfolder;
 function getAllViews( callback ){
   return viewFlexService.post("getAllMyViews").then( views => {
@@ -42,6 +44,16 @@ function getAllViews( callback ){
       ? callback : function(){ return true };
     return success(views.filter( callback ))
   })
+}
+function toJson( str ){
+  var rs = str;
+  try {
+    rs = typeof str === "string" ? JSON.parse( str ) : str;
+  } catch ( e ){
+    console.log( e );
+  } finally {
+    return rs;
+  }
 }
 function writeFilesByViewId( viewId ){
   return viewFlexService.post("getViewById", viewId).then( view => {
@@ -139,12 +151,14 @@ psdefine(function(){return{
       })
   })
 }
-function execQueue( queue, seq, callback ) {
+function execQueue( queue, seq, callback, rs ) {
+  rs = rs || [];
   let item = queue.shift();
   item ? log.info( `-------------  No.${ seq }  -------------`  ) : null;
   return item ? callback( item, seq ).then( d => {
-    return execQueue( queue, seq + 1, callback )
-  }) : success("all loaded!");
+    rs.push( d );
+    return execQueue( queue, seq + 1, callback, rs )
+  }) : success( rs );
 }
 function success( d ){
   return new Promise((res,rej) => {
@@ -279,6 +293,51 @@ function build( query ){
     e.message ? log.error( `message : ${e.message}` ) : null;
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   });
+}
+function getrole(){
+  time = new Date();
+  return checkLogin( defaultConfig ).then( d => {
+    return userEnterpriseService.post("queryEnterpriseRole")
+  }).then( roles => {
+    return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder =>{
+      return checkFolderExist(folder, "./roles");
+    }).then( folder => {
+      execQueue( roles, 0, role => {
+        return folder.write("./" + role.roleID + ".json", JSON.stringify( role, null, 2 ))
+      })
+    })
+  })
+}
+function save2role( _name, viewId ){
+  time = new Date();
+  return checkLogin( defaultConfig ).then( d => {
+    return userEnterpriseService.post("queryEnterpriseRole")
+  }).then( roles => {
+    return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder =>{
+      return checkFolderExist(folder, "./roles");
+    }).then( folder => {
+      execQueue( roles, 0, role => {
+        let values = toJson( role.values ),
+          filters = values ? tree().filter( values, ({name}) => name === _name) : null;
+        filters && filters.forEach( n => {
+          n.viewId = viewId;
+        });
+        role.values = values ? JSON.stringify( values ) : null;
+        log.success(`import role ${ role.roleName}`);
+        return success(role);
+      }).then( roles => {
+        let params = roles.map( ({roleName, roleID, values}) => { return {roleName, roleID, values}});
+        execQueue( params, 0, role => {
+          return userRoleUIService.post("modifyRole", role )
+        })
+      }).then( d => {
+        log.success(`all roles updated`);
+      }).catch( e => {
+        e.message ? log.error( `message : ${e.message}` ) : null;
+        e.stack ? log.error( `stack : ${e.stack}` ) : null;
+      });
+    });
+  })
 }
 function removeview( query ){
   let filter = query == "*" || typeof query !== "string"
@@ -431,16 +490,6 @@ function(){
       next();
     }
   }
-  function toJson( str ){
-    var rs = str;
-    try {
-      rs = typeof str == "string" ? str : JSON.stringify( str );
-    } catch ( e ){
-      console.log( e );
-    } finally {
-      return rs;
-    }
-  }
   function getData( req ){
     return new Promise((res, rej) => {
       let str = "";
@@ -541,3 +590,5 @@ module.exports.saveview = saveview;
 module.exports.server = serverFn;
 module.exports.write = write;
 module.exports.build = build;
+module.exports.save2role = save2role;
+module.exports.getrole = getrole;
