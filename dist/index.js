@@ -308,7 +308,7 @@ function getrole(){
     })
   })
 }
-function save2role( _name, viewId ){
+function save2role( _name, _viewId ){
   time = new Date();
   return checkLogin( defaultConfig ).then( d => {
     return userEnterpriseService.post("queryEnterpriseRole")
@@ -318,17 +318,20 @@ function save2role( _name, viewId ){
     }).then( folder => {
       execQueue( roles, 0, role => {
         let values = toJson( role.values ),
-          filters = values ? tree().filter( values, ({name}) => name === _name) : null;
+          filters = values ? tree().filter( values, ({name, viewId }) => name === _name && viewId !== _viewId) : null;
         filters && filters.forEach( n => {
-          n.viewId = viewId;
+          n.viewId = _viewId;
         });
         role.values = values ? JSON.stringify( values ) : null;
-        log.success(`import role ${ role.roleName}`);
-        return success(role);
+        filters && filters.length > 0 ? log.success(`import role ${ role.roleName}`) : log.minor(`no change ${ role.roleName}`);
+        return success(filters && filters.length > 0  ? role : null);
       }).then( roles => {
-        let params = roles.map( ({roleName, roleID, values}) => { return {roleName, roleID, values}});
-        execQueue( params, 0, role => {
-          return userRoleUIService.post("modifyRole", role )
+        let params = roles.filter( d => d ).map( ({roleName, roleID, values}) => { return {roleName, roleID, values}});
+        return execQueue( params, 0, role => {
+          log.info(`start to updated ${ role.roleName }`);
+          return userRoleUIService.post("modifyRole", role ).then( d => {
+            log.success(`success to updated ${ role.roleName }`);
+          })
         })
       }).then( d => {
         log.success(`all roles updated`);
