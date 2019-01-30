@@ -374,8 +374,8 @@ function removeview( query ){
 }
 function saveview( query ){
   let filter = query == "*" || typeof query !== "string"
-    ? d => true
-    : ({ basename }) => query.split(",").indexOf( basename ) != -1;
+    ? d => d.isDir
+    : ({ basename }) => query.split(",").indexOf( basename ) != -1 && d.isDir;
   function extractLayout( str ){
     let match = /"layout"\s*:\s*({(?:.|\n)*}),\s*\n\s*"setting"/g.exec( str );
     return match ? match[1] : str;

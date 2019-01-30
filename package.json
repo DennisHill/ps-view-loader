@@ -1,6 +1,6 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/mayalust/ps-view-loader.git"
   },
-  "author": ""
+  "author": "",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/mayalust/ps-view-loader/issues"
