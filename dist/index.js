@@ -345,8 +345,8 @@ function save2role( _name, _viewId ){
 }
 function removeview( query ){
   let filter = query == "*" || typeof query !== "string"
-    ? d => true
-    : ({ basename }) => query.split(",").indexOf( basename ) != -1;
+    ? d => d.isDir
+    : ({ basename }) => query.split(",").indexOf( basename ) != -1 && d.isDir;
   return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder => {
     return folder.readDir('./views');
   }).then( viewFolders => {
