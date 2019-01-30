@@ -201,6 +201,7 @@ function checkFolderExist( folder, name ){
 }
 function write( query ){
   time = new Date();
+  query += "";
   return checkLogin( defaultConfig ).then( d => {
     return psfile(pathLib.resolve(workpath)).stat()
   }).then( folder => {
