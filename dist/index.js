@@ -2,10 +2,12 @@ const server = require("ps-request"),
   webpack = require("webpack"),
   beautify = require('js-beautify'),
   log = require("proudsmart-log")(),
+  origin = require('./host'),
   { tree, random, extend } = require("ps-ultility"),
   workpath = process.cwd(),
   pathLib = require("path"),
   isDirectory = view => view.isDir,
+  getViewId = view => view.viewId,
   isDashboard = view => view.viewType === "dashboard",
   defaultConfig = {
     username : "baowu_steel",
@@ -194,6 +196,25 @@ function checkLogin( { username, password } ) {
     })
   });
 }
+function checkLoginByOrigin(name, { username, password }){
+  console.log(origin(name).origin);
+  let req = server(`${origin(name).origin}/api/rest/post/`),
+    userLoginUIService = req.service("userLoginUIService");
+  return new Promise((resolve, reject) => {
+    userLoginUIService.post("getCurrentUser").then( d => {
+      log.info( `account [${ username }/${ password }] is already logined, continue` );
+      resolve( d );
+    }).catch( e => {
+      log.info(`no login`);
+      userLoginUIService.post("login", [ username, password ]).then( d => {
+        log.info( `account [${ username }/${ password }] has already been logined to "${origin(name).origin}", continue` );
+        resolve( d );
+      }).catch( e => {
+        reject( e );
+      })
+    })
+  });
+}
 function checkFolderExist( folder, name ){
   return folder.exist( name )
     ? folder.stat( name )
@@ -370,6 +391,49 @@ function removeview( query ){
   }).catch( e => {
     e.message ? log.error( `message : ${e.message}` ) : null;
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
+  })
+}
+function copyview(from, to, query){
+  query = query || "*";
+  let account = ["baowu_steel", "abc123"],
+    reqfrom = server(`${origin(from).origin}/api/rest/post/`),
+    reqto = server(`${origin(to).origin}/api/rest/post/`),
+    userLoginUIServiceFrom = reqfrom.service("userLoginUIService"),
+    userLoginUIServiceTo = reqto.service("userLoginUIService"),
+    viewFlexServiceFrom = reqfrom.service("viewFlexService"),
+    viewFlexServiceTo = reqto.service("viewFlexService");
+  console.log(origin(from).origin, origin(to).origin);
+  return userLoginUIServiceFrom.post( "login", account ).then( d => {
+    return ( query === "*" ? viewFlexServiceFrom.post("getAllMyViews")
+        .then( views => success(views.filter( ({viewType}) => viewType == "dashboard").map(getViewId)))
+      : success(query.split(",")))
+      .then( viewIds => {
+        return execQueue( viewIds, 0, ( viewId, inx ) => {
+          return viewFlexServiceFrom.post( "getViewById", viewId ).then( view => {
+            log.success(`"${view.viewTitle}" is extracted from "${origin(from).origin}"!`);
+            return success( view );
+          });
+        });
+      }).then( views => {
+        log.info("start to copy view");
+        return userLoginUIServiceTo.post( "login", account ).then( d => {
+          return execQueue( views, 0, ( view, inx ) => {
+            let params = {
+              viewId : view.viewId,
+              content : view.content,
+              viewTitle : view.viewTitle
+            };
+            return viewFlexServiceTo.post( "updateView", params ).then(() => {
+              log.success(`"${view.viewTitle}" is copyed to "${origin(to).origin}"!`);
+              return success(`${to.origin} success`);
+            })
+          })
+        });
+      }).then( d => {
+        log.success(`all dashboard is copyed from "${origin(from).origin}" to "${origin(to).origin}"`);
+      }).catch( e => {
+        log.error(e);
+      })
   })
 }
 function saveview( query ){
@@ -589,6 +653,9 @@ function(){
       res.end();
     });
   })
+}
+module.exports.cp117to199 = function( query ){
+  copyview("117", "199", query );
 }
 module.exports.saveview = saveview;
 module.exports.server = serverFn;
