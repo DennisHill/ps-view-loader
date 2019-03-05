@@ -9,11 +9,11 @@ module.exports = function( str ){
         origin: "http://192.168.1.199"
       };
       break;
-    case 'baogang_prod' :
+    case '91' :
       factory = {
         version: version,
         protocol: "ws:",
-        host: "17.144.123.32:8080",
+        host: "117.144.123.32:8080",
         origin: "http://117.144.123.32:8080/"
       };
       break;
@@ -95,14 +95,6 @@ module.exports = function( str ){
         protocol: "ws:",
         host: "192.168.1.129",
         origin: "http://192.168.1.129"
-      };
-      break;
-    case '91' :
-      factory = {
-        version: version,
-        protocol: "ws:",
-        host: "10.26.10.91",
-        origin: "http://10.26.10.91"
       };
       break;
     case '144' :

@@ -1,6 +1,6 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
@@ -8,7 +8,8 @@
     "build": "ps-view-loader build",
     "save": "ps-view-loader save",
     "save2role" : "ps-view-loader save2role",
-    "cp117to91" : "ps-view-loader cp117to199"
+    "cp117to91" : "ps-view-loader cp117to199",
+    "copyview" : "ps-view-loader copyview"
   },
   "repository": {
     "type": "git",

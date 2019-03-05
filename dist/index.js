@@ -657,6 +657,7 @@ function(){
 module.exports.cp117to199 = function( query ){
   copyview("117", "199", query );
 }
+module.copyview = copyview;
 module.exports.saveview = saveview;
 module.exports.server = serverFn;
 module.exports.write = write;
