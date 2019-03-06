@@ -396,6 +396,7 @@ function removeview( query ){
 function copyview(from, to, query){
   query = query || "*";
   let account = ["baowu_steel", "abc123"],
+    ErrorMsg = "",
     reqfrom = server(`${origin(from).origin}/api/rest/post/`),
     reqto = server(`${origin(to).origin}/api/rest/post/`),
     userLoginUIServiceFrom = reqfrom.service("userLoginUIService"),
@@ -415,22 +416,31 @@ function copyview(from, to, query){
           });
         });
       }).then( views => {
-        log.info("start to copy view");
+        log.info(`start to copy view to ${origin(to).origin}`);
         return userLoginUIServiceTo.post( "login", account ).then( d => {
+          console.log(d.code);
+          log.success(`success login to ${origin(to).origin}`);
           return execQueue( views, 0, ( view, inx ) => {
             let params = {
               viewId : view.viewId,
               content : view.content,
               viewTitle : view.viewTitle
             };
-            return viewFlexServiceTo.post( "updateView", params ).then(() => {
-              log.success(`"${view.viewTitle}" is copyed to "${origin(to).origin}"!`);
-              return success(`${to.origin} success`);
+            return new Promise((res, rej) => {
+              viewFlexServiceTo.post( "updateView", params ).then(() => {
+                log.success(`"${view.viewTitle}[${view.viewId}]" is copyed to "${origin(to).origin}"!`);
+                res(`${to.origin} success`)
+              }).catch( e => {
+                log.error(`"${view.viewTitle}[${view.viewId}]" is not exist!`);
+                ErrorMsg += `"${view.viewTitle}[${view.viewId}]" is not exist!\n`;
+                res(`${to.origin} success`);
+              })
             })
           })
         });
       }).then( d => {
         log.success(`all dashboard is copyed from "${origin(from).origin}" to "${origin(to).origin}"`);
+        ErrorMsg ? log.error(ErrorMsg) : null;
       }).catch( e => {
         log.error(e);
       })
@@ -657,7 +667,7 @@ function(){
 module.exports.cp117to199 = function( query ){
   copyview("117", "199", query );
 }
-module.copyview = copyview;
+module.exports.copyview = copyview;
 module.exports.saveview = saveview;
 module.exports.server = serverFn;
 module.exports.write = write;

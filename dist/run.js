@@ -17,7 +17,7 @@ let arguments = process.argv.slice(2),
     },
     cp117to199(){
       cp117to199.apply( null, arguments );
-    }
+    },
     copyview(){
       copyview.apply( null, arguments );
     }
