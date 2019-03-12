@@ -1,6 +1,6 @@
 {
   "name": "ps-view-loader",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
@@ -31,7 +31,7 @@
     "js-beautify": "^1.8.9",
     "proudsmart-log": "^1.0.14",
     "ps-file": "^1.0.29",
-    "ps-request": "^1.0.0",
+    "ps-request": "^1.0.1",
     "ps-ultility": "^1.0.57",
     "webpack": "^4.29.0"
   }
