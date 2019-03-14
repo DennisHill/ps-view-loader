@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { write, build, saveview, save2role, cp117to199, copyview } = require(`./index`);
+const { write, build, saveview, save2role, cp117to199, copyview, getrole, saverole } = require(`./index`);
 let arguments = process.argv.slice(2),
   command = arguments.shift(),
   fns = {
