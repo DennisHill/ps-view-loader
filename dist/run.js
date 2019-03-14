@@ -20,6 +20,12 @@ let arguments = process.argv.slice(2),
     },
     copyview(){
       copyview.apply( null, arguments );
+    },
+    saverole( ){
+      saverole.apply( null, arguments );
+    },
+    getrole( ){
+      getrole.apply( null, arguments );
     }
   },
   fn = fns[command];

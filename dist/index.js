@@ -341,12 +341,71 @@ function getrole( ori ){
     return userEnterpriseService.post("queryEnterpriseRole")
   }).then( roles => {
     return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder =>{
+      return (folder.exist("./roles") ? folder.stat("./roles").then( d => {
+          return d.removeAll().then( d => {
+            log.info(`"./roles" folder is removed!!`)
+            return folder.mkdir( "./roles" );
+          })
+        })
+        : folder.mkdir( "./roles" ))
       return checkFolderExist(folder, "./roles");
     }).then( folder => {
-      execQueue( roles, 0, role => {
-        return folder.write("./" + role.roleID + ".json", JSON.stringify( role, null, 2 ))
+      return execQueue( roles, 0, role => {
+        return folder.mkdir(`./${ role.roleName }.${ role.roleID }`).then( fd => {
+          let json = toJson( role.values );
+          if( json ){
+            role.values = `require('./${role.roleID}/values.js')`
+          }
+          return fd.write(`./content.js`, `module.exports = ${JSON.stringify( role, null, 2 )}`)
+            .then(()=>{
+            return json ? fd.mkdir(`./${role.roleID}`).then( n => {
+              n.write(`./values.js`, `module.exports = ${JSON.stringify( json, null, 2 )}`)
+                .then( () => {
+                  log.success(`"${role.roleName}.${role.roleID}" is successfully saved to local`);
+                  return success("success")
+                })
+            }) : success("empty");
+          });
+        });
+      })
+    }).then( () => {
+      log.success(`all roles successfully save to local from "${origin(ori).origin}"`)
+    })
+  })
+}
+function getValue( str ){
+  let match = /module\.exports\s*=\s*(\{(?:.|[\n\r])*)$/g.exec(str);
+  return match ? match[1] : null;
+}
+function saverole( ori ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
+  return checkLogin( defaultConfig ).then( d => {
+    return userEnterpriseService.post("queryEnterpriseRole")
+  }).then( roles => {
+    return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder =>{
+      return checkFolderExist(folder, "./roles");
+    }).then( folder => {
+      return execQueue( roles, 0, role => {
+        return folder.exist(`./${role.roleName}.${role.roleID}`)
+          ? folder.stat(`./${role.roleName}.${role.roleID}`)
+            .then( fd => {
+              return fd.exist(`./${role.roleID}/values.js`)
+                ? fd.read(`./${role.roleID}/values.js`).then(values => {
+                let val = getValue(values.toString());
+                role.values = val;
+                return userRoleUIService.post("modifyRole", role ).then( d => {
+                  log.success(`${ role.roleName } is successfully updated to ${ origin(ori).origin }`);
+                })
+              }) : success("empty");
+            })
+          : success("empty")
       })
     })
+
+  }).then( d => {
+    log.success(`all role is successfully updated to ${ origin(ori).origin }`);
   })
 }
 function save2role( _name, _viewId, ori ){
@@ -700,3 +759,4 @@ module.exports.write = write;
 module.exports.build = build;
 module.exports.save2role = save2role;
 module.exports.getrole = getrole;
+module.exports.saverole = saverole;
