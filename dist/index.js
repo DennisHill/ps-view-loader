@@ -32,14 +32,27 @@ const server = require("ps-request"),
       }]
     }
   };
-let req = server("http://36.110.36.118:11780/api/rest/post/"),
+let req,
+  userLoginUIService,
+  resourceUIService,
+  viewFlexService,
+  userEnterpriseService,
+  userRoleUIService,
   time = 0,
-  userLoginUIService = req.service("userLoginUIService"),
-  resourceUIService = req.service("resourceUIService"),
-  viewFlexService = req.service("viewFlexService"),
-  userEnterpriseService = req.service("userEnterpriseService"),
-  userRoleUIService = req.service("userRoleUIService"),
   workfolder;
+
+function connectServer(origin){
+  if(origin[origin.length - 1] === "/"){
+    origin = origin.slice( 0, -1 );
+  }
+  req = server( `${origin}/api/rest/post/` );
+  userLoginUIService = req.service("userLoginUIService");
+  resourceUIService = req.service("resourceUIService");
+  viewFlexService = req.service("viewFlexService");
+  userEnterpriseService = req.service("userEnterpriseService");
+  userRoleUIService = req.service("userRoleUIService");
+  log.success(`"${origin}/api/rest/post/" is successfully connected `)
+}
 function getAllViews( callback ){
   return viewFlexService.post("getAllMyViews").then( views => {
     callback = typeof callback == "function"
@@ -220,7 +233,10 @@ function checkFolderExist( folder, name ){
     ? folder.stat( name )
     : folder.mkdir( name )
 }
-function write( query ){
+function write( query, ori ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
   time = new Date();
   query += "";
   return checkLogin( defaultConfig ).then( d => {
@@ -238,7 +254,7 @@ function write( query ){
       return writeFilesByViewId( viewId );
     });
   }).then( d => {
-    log.success(`---- all view loaded in ${toSecond(new Date() - time)}s ----`);
+    log.success(`---- all view loaded in ${toSecond(new Date() - time)}s ---- from "${origin(ori).origin}"`);
   }).catch( e => {
     e.message ? log.error( `message : ${e.message}` ) : null;
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
@@ -316,7 +332,10 @@ function build( query ){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   });
 }
-function getrole(){
+function getrole( ori ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
   time = new Date();
   return checkLogin( defaultConfig ).then( d => {
     return userEnterpriseService.post("queryEnterpriseRole")
@@ -330,7 +349,10 @@ function getrole(){
     })
   })
 }
-function save2role( _name, _viewId ){
+function save2role( _name, _viewId, ori ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
   time = new Date();
   return checkLogin( defaultConfig ).then( d => {
     return userEnterpriseService.post("queryEnterpriseRole")
@@ -446,7 +468,10 @@ function copyview(from, to, query){
       })
   })
 }
-function saveview( query ){
+function saveview( query , origin ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
   let filter = query == "*" || typeof query !== "string"
     ? d => d.isDir
     : ({ basename }) => query.split(",").indexOf( basename ) != -1 && d.isDir;
@@ -541,7 +566,7 @@ function getlisteners(){
     e.stack ? log.error( `stack : ${e.stack}` ) : null;
   })
 }
-function serverFn( app ){
+function serverFn( app, origin ){
   function angularMiddleware( req, res, next ){
     let match = /app-views[\\/]build[\\/](\d+)\.([^.]+)\.js$/.exec( req.url ),
       viewId, path;
@@ -582,6 +607,7 @@ function(){
       })
     })
   }
+  connectServer( origin );
   app.use(angularMiddleware);
   app.post("/api/rest/post/inspectionService/start", (req, res) => {
     getData( req ).then( viewId => {
