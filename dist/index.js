@@ -351,6 +351,16 @@ function getrole( ori ){
       return checkFolderExist(folder, "./roles");
     }).then( folder => {
       return execQueue( roles, 0, role => {
+        findUnrecognize( role.roleName );
+        findUnrecognize( role.values );
+        function findUnrecognize( str ){
+          let item, reg = /�/g, start, end;
+          while(item = reg.exec(str)){
+            start = item.index - 5 > -1 ? item.index - 5 : 0;
+            end = item.index + 5 < str.length ? item.index + 5 : str.length - 1;
+            log.error(`${role.roleName}.${role.roleID}" has unrecognized character "${ str.slice(start, end)}"`);
+          }
+        }
         return folder.mkdir(`./${ role.roleName }.${ role.roleID }`).then( fd => {
           let json = toJson( role.values );
           if( json ){
