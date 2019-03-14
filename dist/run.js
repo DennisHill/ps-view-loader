@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { write, build, saveview, save2role, cp117to199, copyview, getrole, saverole } = require(`./index`);
+const { write, build, saveview, save2role, cp117to199, copyview, getrole, saverole, save2roleByCondition } = require(`./index`);
 let arguments = process.argv.slice(2),
   command = arguments.shift(),
   fns = {
@@ -26,6 +26,9 @@ let arguments = process.argv.slice(2),
     },
     getrole( ){
       getrole.apply( null, arguments );
+    },
+    save2roleByCondition(){
+      save2roleByCondition.apply( null, arguments );
     }
   },
   fn = fns[command];

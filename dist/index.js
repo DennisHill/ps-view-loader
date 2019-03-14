@@ -408,6 +408,40 @@ function saverole( ori ){
     log.success(`all role is successfully updated to ${ origin(ori).origin }`);
   })
 }
+function save2roleByCondition( ori, fn ){
+  if( typeof ori === "string" ){
+    connectServer(origin(ori).origin);
+  }
+  time = new Date();
+  return checkLogin( defaultConfig ).then( d => {
+    return userEnterpriseService.post("queryEnterpriseRole")
+  }).then( roles => {
+    return psfile(pathLib.resolve(workpath)).stat("./app-views").then( folder =>{
+      return checkFolderExist(folder, "./roles");
+    }).then( folder => {
+      execQueue( roles, 0, role => {
+        let values = toJson( role.values ),
+          filters = values ? tree().filter( values, fn ) : null;
+        role.values = values ? JSON.stringify( values ) : null;
+        filters && filters.length > 0 ? log.success(`import role ${ role.roleName}`) : log.minor(`no change ${ role.roleName}`);
+        return success(filters && filters.length > 0  ? role : null);
+      }).then( roles => {
+        let params = roles.filter( d => d ).map( ({roleName, roleID, values}) => { return {roleName, roleID, values}});
+        return execQueue( params, 0, role => {
+          log.info(`start to updated ${ role.roleName }`);
+          return userRoleUIService.post("modifyRole", role ).then( d => {
+            log.success(`success to updated ${ role.roleName }`);
+          })
+        })
+      }).then( d => {
+        log.success(`all roles updated`);
+      }).catch( e => {
+        e.message ? log.error( `message : ${e.message}` ) : null;
+        e.stack ? log.error( `stack : ${e.stack}` ) : null;
+      });
+    });
+  })
+}
 function save2role( _name, _viewId, ori ){
   if( typeof ori === "string" ){
     connectServer(origin(ori).origin);
@@ -760,3 +794,4 @@ module.exports.build = build;
 module.exports.save2role = save2role;
 module.exports.getrole = getrole;
 module.exports.saverole = saverole;
+module.exports.save2roleByCondition = save2roleByCondition;
