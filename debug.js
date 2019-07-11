@@ -6,4 +6,4 @@ const {
     save2roleByCondition,
     copyview
 } = require("./dist/index.js");
-copyview("91", "11780", "177280852260000");
+copyview("117", "zhanjiang", "249745857838772");

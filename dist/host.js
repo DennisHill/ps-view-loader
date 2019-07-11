@@ -2,6 +2,22 @@ module.exports = function (str) {
   let factory = {},
     version = "1.0.0";
   switch (str) {
+    case 'zhanjiang':
+      factory = {
+        version: version,
+        protocol: "ws:",
+        host: "10.27.16.133",
+        origin: "http://10.27.16.133"
+      };
+      break;
+    case '117':
+      factory = {
+        version: version,
+        protocol: "ws:",
+        host: "192.168.1.117",
+        origin: "http://192.168.1.117"
+      };
+      break;
     case '191':
       factory = {
         version: version,

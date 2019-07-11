@@ -1,0 +1,25 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [{
+        "type": "node",
+        "request": "launch",
+        "name": "save",
+        "program": "${workspaceFolder}/dist/run.js",
+        "args": ["save", "517719987480000", "191"]
+    }, {
+        "type": "node",
+        "request": "launch",
+        "name": "import",
+        "program": "${workspaceFolder}/dist/run.js",
+        "args": ["import", "517719987480000", "191"]
+    }, {
+        "type": "node",
+        "request": "launch",
+        "name": "copyview",
+        "program": "${workspaceFolder}/dist/run.js",
+        "args": ["copyview", "191", "91", "177280852260000"]
+    }]
+}
