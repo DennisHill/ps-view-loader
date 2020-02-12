@@ -1,0 +1,38 @@
+{
+  "name": "ps-view-loader-twin",
+  "version": "0.0.5",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "import": "ps-view-loader import",
+    "build": "ps-view-loader build",
+    "save": "ps-view-loader save",
+    "save2role": "ps-view-loader save2role",
+    "cp117to199": "ps-view-loader cp117to199",
+    "copyview": "ps-view-loader copyview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mayalust/ps-view-loader.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mayalust/ps-view-loader/issues"
+  },
+  "bin": {
+    "ps-view-loader": "./dist/run.js"
+  },
+  "homepage": "https://github.com/mayalust/ps-view-loader#readme",
+  "dependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/preset-env": "^7.2.3",
+    "babel-loader": "^8.0.4",
+    "js-beautify": "^1.8.9",
+    "proudsmart-log": "^1.0.14",
+    "ps-file": "^1.0.29",
+    "ps-request": "^1.0.6",
+    "ps-ultility": "^1.0.57",
+    "webpack": "^4.29.0"
+  }
+}
